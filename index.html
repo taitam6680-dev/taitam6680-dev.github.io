@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pi DeFi Lab Pro - Học & Mô phỏng Pi DEX</title>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0a10;
+      --bg-card: #151320;
+      --border: rgba(255, 255, 255, 0.08);
+      --pi-purple: #8b5cf6;
+      --pi-purple-dark: #5b21b6;
+      --pi-gold: #f59e0b;
+      --pi-gold-glow: rgba(245, 158, 11, 0.25);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.12);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(139, 92, 246, 0.15), transparent 35%),
+        radial-gradient(circle at 85% 30%, rgba(245, 158, 11, 0.08), transparent 35%);
+      color: var(--text-main);
+      padding-bottom: 90px;
+      min-height: 100vh;
+    }
+
+    /* Cụm Header + Thanh Tab cố định phía trên */
+    .top-sticky-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: rgba(11, 10, 16, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--pi-purple), var(--pi-gold));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px; color: #fff;
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+      flex-shrink: 0;
+    }
+    .brand-title h1 { margin: 0; font-size: 15.5px; font-weight: 800; letter-spacing: -0.3px; }
+    .brand-title span { font-size: 11px; color: var(--pi-gold); font-weight: 600; display: block; }
+
+    .wallet-btn {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(245, 158, 11, 0.2));
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: var(--pi-gold);
+      padding: 7px 12px; border-radius: 99px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+      white-space: nowrap;
+    }
+    .wallet-btn:hover {
+      background: linear-gradient(135deg, var(--pi-purple), var(--pi-gold));
+      color: #fff; box-shadow: 0 0 15px var(--pi-gold-glow);
+    }
+
+    /* Thanh 3 Tab ngang gọn gàng ngay dưới Header */
+    nav.top-nav {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 0 16px 12px 16px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    nav.top-nav button {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      padding: 9px 6px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    nav.top-nav button.active {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(245, 158, 11, 0.2));
+      color: #fff;
+      border-color: var(--pi-purple);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+    }
+    nav.top-nav button i { font-style: normal; font-size: 14px; }
+
+    .container { padding: 16px; max-width: 560px; margin: 0 auto; }
+    .tab-content { display: none; animation: fadeIn 0.25s ease; }
+    .tab-content.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px;
+    }
+    .card h2 {
+      margin: 0; font-size: 15.5px; font-weight: 700; color: #fff;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .badge {
+      font-size: 11px; padding: 3px 8px; border-radius: 6px;
+      background: rgba(139, 92, 246, 0.15); color: #c4b5fd; font-weight: 600; white-space: nowrap;
+    }
+    .card p { margin: 0 0 10px 0; font-size: 13.5px; line-height: 1.6; color: var(--text-muted); }
+
+    .highlight-box {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 3px solid var(--pi-gold);
+      padding: 10px 12px;
+      border-radius: 0 10px 10px 0;
+      font-size: 13px; color: #e2e8f0; margin-bottom: 12px; line-height: 1.55;
+    }
+
+    .step-list {
+      margin: 8px 0 12px 0; padding-left: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6;
+    }
+    .step-list li { margin-bottom: 6px; }
+    .step-list b { color: #fff; }
+
+    /* Table */
+    .comp-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; }
+    .comp-table th {
+      text-align: left; padding: 9px 8px; background: rgba(139, 92, 246, 0.15);
+      color: #e9d5ff; font-weight: 700; border-bottom: 1px solid var(--border);
+    }
+    .comp-table td {
+      padding: 9px 8px; border-bottom: 1px solid var(--border);
+      color: var(--text-muted); vertical-align: top; line-height: 1.45;
+    }
+    .comp-table td:first-child { font-weight: 700; color: #fff; width: 26%; }
+    .comp-table tr:last-child td { border-bottom: none; }
+
+    /* Tool Grid */
+    .tool-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 8px; }
+    .tool-item {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px;
+    }
+    .tool-item-title {
+      font-size: 13.5px; font-weight: 700; color: var(--pi-gold);
+      margin-bottom: 4px; display: flex; justify-content: space-between;
+    }
+    .tool-item-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Accordion */
+    details {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border);
+      border-radius: 12px; margin-bottom: 10px; overflow: hidden;
+    }
+    summary {
+      padding: 12px 14px; font-size: 13.5px; font-weight: 700; color: #fff;
+      cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "＋"; color: var(--pi-gold); font-size: 16px; }
+    details[open] summary::after { content: "－"; }
+    details[open] summary { border-bottom: 1px solid var(--border); background: rgba(139, 92, 246, 0.08); }
+    .details-body { padding: 12px 14px; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    /* Sub-tabs */
+    .sub-nav {
+      display: flex; gap: 8px; margin-bottom: 14px; background: rgba(0,0,0,0.3);
+      padding: 5px; border-radius: 12px; border: 1px solid var(--border);
+    }
+    .sub-nav button {
+      flex: 1; padding: 8px; border: none; border-radius: 8px; font-size: 12.5px;
+      font-weight: 700; background: transparent; color: var(--text-muted); cursor: pointer;
+    }
+    .sub-nav button.active { background: var(--pi-purple); color: #fff; }
+    .sub-panel { display: none; }
+    .sub-panel.active { display: block; }
+
+    /* Token Selector & Dropdown */
+    .token-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .token-tab {
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 8px; text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .token-tab.active {
+      background: rgba(139, 92, 246, 0.2); border-color: var(--pi-purple);
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.25);
+    }
+    .token-tab-name { font-size: 13px; font-weight: 800; color: #fff; display: block; }
+    .token-tab-tag { font-size: 10.5px; color: var(--pi-gold); display: block; margin-top: 2px; }
+
+    .sync-box {
+      background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 12px; padding: 12px; margin-bottom: 14px;
+    }
+    .sync-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .sync-btn {
+      background: var(--green); color: #052e16; border: none; padding: 7px 12px;
+      border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;
+    }
+    .sync-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .pool-select {
+      width: 100%; background: #0f0d17; color: #fff; border: 1px solid var(--border);
+      padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; outline: none;
+    }
+
+    /* Sliders */
+    .slider-block {
+      background: rgba(0, 0, 0, 0.25); padding: 12px 14px;
+      border-radius: 12px; border: 1px solid var(--border); margin-bottom: 12px;
+    }
+    .slider-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+    .slider-val {
+      font-weight: 700; color: var(--pi-gold);
+      background: rgba(245, 158, 11, 0.12); padding: 2px 8px; border-radius: 6px;
+    }
+    input[type="range"] {
+      -webkit-appearance: none; width: 100%; height: 6px; border-radius: 5px; background: #2d2a3e; outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--pi-gold), #f97316);
+      cursor: pointer; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); border: 2px solid #fff;
+    }
+
+    /* Visual Comparison Bar */
+    .comp-bar-wrap {
+      margin: 16px 0; background: rgba(0, 0, 0, 0.3);
+      padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+    }
+    .bar-row { margin-bottom: 10px; }
+    .bar-row:last-child { margin-bottom: 0; }
+    .bar-labels { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text-muted); }
+    .bar-track { height: 8px; background: #252236; border-radius: 99px; overflow: hidden; }
+    .bar-fill-hodl { height: 100%; background: #64748b; border-radius: 99px; transition: width 0.3s ease; }
+    .bar-fill-lp { height: 100%; background: linear-gradient(90deg, var(--pi-purple), var(--pi-gold)); border-radius: 99px; transition: width 0.3s ease; }
+
+    /* Metrics Grid */
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .metric-card {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border);
+      padding: 11px; border-radius: 12px;
+    }
+    .metric-title { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .metric-num { font-size: 15px; font-weight: 800; }
+    .text-green { color: var(--green); }
+    .text-red { color: var(--red); }
+    .text-gold { color: var(--pi-gold); }
+
+    /* DEX Swap Box */
+    .swap-box { background: #0f0d17; border: 1px solid var(--border); border-radius: 14px; padding: 14px; position: relative; }
+    .swap-box-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .swap-input-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .swap-input-row input {
+      background: transparent; border: none; color: #fff; font-size: 22px; font-weight: 700; width: 58%; outline: none;
+    }
+    .token-pill {
+      background: rgba(255, 255, 255, 0.08); padding: 6px 12px; border-radius: 99px;
+      font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+
+    .flip-btn-wrap { display: flex; justify-content: center; margin: -10px 0; position: relative; z-index: 5; }
+    .flip-btn {
+      width: 34px; height: 34px; border-radius: 50%; background: var(--bg-card);
+      border: 2px solid var(--pi-purple); color: #fff; font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4); transition: transform 0.2s;
+    }
+    .flip-btn:active { transform: rotate(180deg); }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--pi-purple), #6d28d9);
+      color: #fff; border: none; padding: 13px; border-radius: 12px;
+      font-size: 14px; font-weight: 700; width: 100%; cursor: pointer; margin-top: 12px;
+      box-shadow: 0 4px 15px rgba(109, 40, 217, 0.4); transition: transform 0.15s;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06); color: #e2e8f0; border: 1px solid var(--border);
+      padding: 11px; border-radius: 12px; font-size: 13px; font-weight: 600; width: 100%; cursor: pointer; margin-top: 8px;
+    }
+
+    .btn-ad {
+      background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; border: none;
+      padding: 12px; border-radius: 12px; font-size: 13.5px; font-weight: 800;
+      width: 100%; cursor: pointer; margin-top: 8px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    /* Quiz */
+    .quiz-btn {
+      width: 100%; text-align: left; background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border); color: var(--text-main);
+      padding: 11px 14px; border-radius: 12px; margin-bottom: 8px; font-size: 13px; cursor: pointer;
+    }
+    .quiz-btn:hover { background: rgba(255, 255, 255, 0.08); }
+    .quiz-btn.correct { background: var(--green-bg); border-color: var(--green); color: #6ee7b7; font-weight: 600; }
+    .quiz-btn.wrong { background: var(--red-bg); border-color: var(--red); color: #fca5a5; }
+
+    /* Trade History */
+    .history-list { max-height: 150px; overflow-y: auto; font-size: 12px; }
+    .history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<div class="top-sticky-wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-logo">π</div>
+      <div class="brand-title">
+        <h1>Pi DeFi Lab Pro</h1>
+        <span>Học viện & Mô phỏng Pi DEX</span>
+      </div>
+    </div>
+    <button class="wallet-btn" id="piUserBadge" onclick="loginPi()">
+      <span>●</span> Kết nối Ví Pi
+    </button>
+  </header>
+
+  <nav class="top-nav">
+    <button class="active" onclick="switchTab('learn', this)"><i>📘</i>Kiến thức</button>
+    <button onclick="switchTab('sim', this)"><i>🧪</i>Mô phỏng</button>
+    <button onclick="switchTab('trade', this)"><i>⚡</i>Đấu trường</button>
+  </nav>
+</div>
+
+<div class="container">
+
+  <!-- ==================== TAB 1: KIẾN THỨC ==================== -->
+  <div id="tab-learn" class="tab-content active">
+
+    <div class="card">
+      <div class="card-header">
+        <h2>⚖️ 1. So sánh Sàn CEX và Sàn DEX</h2>
+        <span class="badge">Nền tảng</span>
+      </div>
+      <p>Để kiếm tiền an toàn từ Pi, người dùng cần phân biệt rõ nơi giao dịch tập trung (CEX) và phi tập trung (DEX):</p>
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Tiêu chí</th>
+            <th>Sàn CEX (OKX, Bitget...)</th>
+            <th>Pi DEX (Phi tập trung)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Quyền giữ Pi</td>
+            <td>Sàn giữ tài sản giúp bạn (Custodial). Rủi ro nếu sàn khóa rút.</td>
+            <td><b style="color:var(--green);">Bạn tự giữ 100%</b> trong Ví Pi cá nhân (Non-custodial).</td>
+          </tr>
+          <tr>
+            <td>Cách khớp lệnh</td>
+            <td>Sổ lệnh (Order Book): Cần có người mua & người bán đặt giá khớp nhau.</td>
+            <td><b style="color:var(--pi-gold);">Thuật toán AMM</b>: Giao dịch trực tiếp với Bể thanh khoản bất cứ lúc nào.</td>
+          </tr>
+          <tr>
+            <td>Cặp giao dịch</td>
+            <td>Đổi Pi ra USDT, tiền pháp định (VNĐ) dễ dàng.</td>
+            <td>Hoán đổi (Swap) giữa Pi và các Token ứng dụng trong hệ sinh thái Pi.</td>
+          </tr>
+          <tr>
+            <td>Quản lý & Phí</td>
+            <td>Công ty trung gian quản lý, thu phí sàn & phí rút tiền.</td>
+            <td>Hợp đồng thông minh tự vận hành; phí giao dịch chia lại cho người góp bể.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>🔄 2. Kiếm Pi từ chênh lệch giá CEX – DEX</h2>
+        <span class="badge" style="background:var(--green-bg); color:var(--green);">Arbitrage</span>
+      </div>
+      <p>Vì sàn CEX định giá theo sổ lệnh còn Pi DEX định giá tự động theo bể thanh khoản AMM, hai nơi này thường xuyên xuất hiện <b>độ vênh giá</b> khi thị trường biến động mạnh.</p>
+      <div class="highlight-box">
+        <b>Ví dụ thực tế:</b> Một Token hệ sinh thái đang có giá <b>1.00 USD</b> trên sàn CEX, nhưng trên Pi DEX có người vừa xả hàng mạnh khiến giá trong bể giảm xuống còn <b>0.88 USD</b> (chênh lệch 12%).
+      </div>
+      <ol class="step-list">
+        <li><b>Bước 1 (Mua rẻ trên DEX):</b> Dùng <b>1,000 Pi</b> trên Pi DEX để gom số tài sản đang bị định giá thấp ở mức 0.88 USD.</li>
+        <li><b>Bước 2 (Chuyển & Bán đắt trên CEX):</b> Chuyển lượng tài sản đó lên sàn CEX bán ở mức 1.00 USD.</li>
+        <li><b>Bước 3 (Chốt lời ra Pi):</b> Quy đổi tiền thu về ngược lại thành <b>1,085 Pi</b> (sau khi trừ phí Swap 0.3%, trượt giá AMM và phí mạng). Lãi ròng <b>+85 Pi</b>.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>💧 3. AMM & Bể thanh khoản hoạt động ra sao?</h2>
+        <span class="badge" style="background:rgba(245,158,11,0.15); color:#fbbf24;">Cơ chế sinh lời</span>
+      </div>
+      <details open>
+        <summary>Trình tạo lập thị trường tự động (AMM)</summary>
+        <div class="details-body">
+          AMM sử dụng công thức bất biến <b>x × y = k</b> (<b>x</b> là lượng Pi, <b>y</b> là lượng Token, <b>k</b> là hằng số). Khi nhiều người dùng Pi mua Token, lượng Pi trong bể tăng lên và Token giảm đi, tự động đẩy giá Token tăng theo đường cong cung cầu.
+        </div>
+      </details>
+      <details>
+        <summary>Bể thanh khoản (Liquidity Pool) & Phí LP</summary>
+        <div class="details-body">
+          Là "kho chứa chung" do cộng đồng đóng góp theo cặp giá trị tương đương (ví dụ: 500 Pi + lượng Token A trị giá 500 Pi). Khi có lệnh Swap qua bể, phí <b>0.1% - 0.3%</b> sẽ được chia tự động cho người góp bể.
+        </div>
+      </details>
+      <details>
+        <summary>Rủi ro Tổn thất vô thường (Impermanent Loss)</summary>
+        <div class="details-body">
+          Nếu giá Token biến động quá mạnh so với Pi, thuật toán AMM tự động cân bằng lại tỷ lệ trong bể khiến tổng giá trị khi rút ra có thể thấp hơn việc chỉ giữ yên trong ví. Chỉ nên góp vốn vào bể có khối lượng giao dịch lớn để tiền phí bù đắp vượt mức tổn thất.
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>🛠️ 4. Các công cụ DeFi & Tiện ích khác trên Pi</h2>
+        <span class="badge" style="background:var(--green-bg); color:var(--green);">Hệ sinh thái</span>
+      </div>
+      <div class="tool-grid">
+        <div class="tool-item">
+          <div class="tool-item-title"><span>🚀 Pi Launchpad</span><span style="font-size:11px; color:#c4b5fd;">Gọi vốn & Mua sớm</span></div>
+          <div class="tool-item-desc">Giúp các ứng dụng phát hành token và khởi tạo thanh khoản ban đầu. Người dùng có thể cam kết Pi sớm để mua token của các dự án tiềm năng trước khi niêm yết rộng rãi.</div>
+        </div>
+        <div class="tool-item">
+          <div class="tool-item-title"><span>🌾 Yield Farming & Staking</span><span style="font-size:11px; color:#c4b5fd;">Lãi suất kép</span></div>
+          <div class="tool-item-desc">Đem chứng chỉ <b>LP Token</b> (nhận được khi góp bể) đi khóa vào các giao thức Farming để nhận thêm phần thưởng token miễn phí từ nhà phát triển.</div>
+        </div>
+        <div class="tool-item">
+          <div class="tool-item-title"><span>🛡️ Tên miền .pi & Xác minh KYB</span><span style="font-size:11px; color:#c4b5fd;">Lọc dự án an toàn</span></div>
+          <div class="tool-item-desc">Các dự án đã xác minh doanh nghiệp (<b>KYB</b>) và có tên miền <b>.pi</b> chính thức giúp người dùng phòng tránh các token lừa đảo (Rug Pull) trên DEX.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>🎯 Thử thách kiến thức thực chiến</h2>
+        <span class="badge" style="background:var(--green-bg); color:var(--green);" id="quizScoreBadge">0/3 Câu đúng</span>
+      </div>
+      <p><b>Câu 1:</b> Điểm khác biệt lớn nhất về quyền quản lý tài sản giữa Pi DEX và sàn tập trung (CEX) là gì?</p>
+      <button class="quiz-btn" onclick="checkQuiz(1, this, false)">A. Pi DEX giữ hộ Pi của bạn trong kho lạnh của sàn</button>
+      <button class="quiz-btn" onclick="checkQuiz(1, this, true)">B. Bạn tự giữ 100% quyền kiểm soát Pi trong ví cá nhân khi giao dịch</button>
+      <div id="quizFeedback1" style="font-size:12.5px; font-weight:600; margin-bottom:14px;"></div>
+
+      <p><b>Câu 2:</b> Yếu tố nào dễ làm mất sạch lợi nhuận khi giao dịch chênh lệch giá (Arbitrage) giữa CEX và DEX?</p>
+      <button class="quiz-btn" onclick="checkQuiz(2, this, true)">A. Bể thanh khoản trên DEX quá nhỏ gây trượt giá cao khi đặt lệnh lớn</button>
+      <button class="quiz-btn" onclick="checkQuiz(2, this, false)">B. Ví Pi không cho phép chuyển tài sản giữa các ví</button>
+      <div id="quizFeedback2" style="font-size:12.5px; font-weight:600; margin-bottom:14px;"></div>
+
+      <p><b>Câu 3:</b> Dấu hiệu nào giúp nhận biết một dự án uy tín trên Pi DEX và Launchpad?</p>
+      <button class="quiz-btn" onclick="checkQuiz(3, this, true)">A. Dự án có ứng dụng hoạt động thật, đã xác minh KYB và tên miền .pi</button>
+      <button class="quiz-btn" onclick="checkQuiz(3, this, false)">B. Token mới tạo vô danh hứa hẹn trả lãi cố định 50%/ngày</button>
+      <div id="quizFeedback3" style="font-size:12.5px; font-weight:600;"></div>
+    </div>
+
+  </div>
+
+  <!-- ==================== TAB 2: MÔ PHỎNG ==================== -->
+  <div id="tab-sim" class="tab-content">
+    <div class="sub-nav">
+      <button class="active" onclick="switchSimSub('arb', this)">🔄 Chênh lệch CEX–DEX</button>
+      <button onclick="switchSimSub('lp', this)">💧 Bể thanh khoản LP</button>
+    </div>
+
+    <div id="sim-arb" class="sub-panel active">
+      <div class="card">
+        <div class="card-header">
+          <h2>🔄 Mô phỏng Arbitrage CEX – DEX</h2>
+          <span class="badge">Tính lãi ròng thực tế</span>
+        </div>
+        <p>Kéo các thanh trượt để kiểm tra xem kèo mua rẻ trên DEX – bán đắt trên CEX có thực sự có lãi sau khi trừ trượt giá và phí hay không:</p>
+
+        <div class="slider-block">
+          <div class="slider-top"><span>Vốn Pi dùng để gom hàng trên DEX:</span><span class="slider-val" id="lblArbCapital">500 Pi</span></div>
+          <input type="range" id="inpArbCapital" min="50" max="2000" step="50" value="500" oninput="calcArb()" />
+        </div>
+        <div class="slider-block">
+          <div class="slider-top"><span>Mức chênh lệch giá (CEX cao hơn DEX):</span><span class="slider-val" id="lblArbSpread">+8.0%</span></div>
+          <input type="range" id="inpArbSpread" min="1" max="25" step="0.5" value="8" oninput="calcArb()" />
+        </div>
+        <div class="slider-block">
+          <div class="slider-top"><span>Quy mô bể thanh khoản trên Pi DEX:</span><span class="slider-val" id="lblArbPool">20,000 Pi</span></div>
+          <input type="range" id="inpArbPool" min="2000" max="100000" step="2000" value="20000" oninput="calcArb()" />
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card"><div class="metric-title">Chi phí trượt giá AMM</div><div class="metric-num text-red" id="resArbSlippage">-12.2 Pi</div></div>
+          <div class="metric-card"><div class="metric-title">Phí Swap DEX + CEX</div><div class="metric-num text-red" id="resArbFees">-2.5 Pi</div></div>
+          <div class="metric-card"><div class="metric-title">Tổng Pi thu về</div><div class="metric-num text-gold" id="resArbReturn">525.3 Pi</div></div>
+          <div class="metric-card" style="background: rgba(139, 92, 246, 0.08);"><div class="metric-title">Lợi nhuận ròng</div><div class="metric-num text-green" id="resArbProfit">+25.3 Pi</div></div>
+        </div>
+        <div class="highlight-box" id="arbAdvice" style="margin-top:12px; margin-bottom:0;"></div>
+      </div>
+    </div>
+
+    <div id="sim-lp" class="sub-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2>🧪 Mô phỏng Bể thanh khoản</h2>
+          <span class="badge">Chọn cặp mẫu</span>
+        </div>
+        <div class="token-selector">
+          <div class="token-tab active" onclick="selectLpPreset('piusd', this)"><span class="token-tab-name">Pi / PiUSD</span><span class="token-tab-tag">Ổn định</span></div>
+          <div class="token-tab" onclick="selectLpPreset('eco', this)"><span class="token-tab-name">Pi / ECO</span><span class="token-tab-tag">Ứng dụng</span></div>
+          <div class="token-tab" onclick="selectLpPreset('meme', this)"><span class="token-tab-name">Pi / MEME</span><span class="token-tab-tag">Biến động cao</span></div>
+        </div>
+
+        <div class="slider-block">
+          <div class="slider-top"><span>Vốn Pi góp vào bể (kèm Token tương đương):</span><span class="slider-val" id="lblPiAmount">500 Pi</span></div>
+          <input type="range" id="inpPiAmount" min="100" max="5000" step="100" value="500" oninput="calcLP()" />
+        </div>
+        <div class="slider-block">
+          <div class="slider-top"><span id="lblPairPriceTitle">Biến động giá PiUSD so với Pi:</span><span class="slider-val" id="lblPriceChange">+10% (x1.10)</span></div>
+          <input type="range" id="inpPriceChange" min="-80" max="400" step="5" value="10" oninput="calcLP()" />
+        </div>
+        <div class="slider-block">
+          <div class="slider-top"><span>Lãi suất phí giao dịch ước tính (APY):</span><span class="slider-val" id="lblFeeApr">16% / năm</span></div>
+          <input type="range" id="inpFeeApr" min="0" max="150" step="2" value="16" oninput="calcLP()" />
+        </div>
+
+        <div class="comp-bar-wrap">
+          <div class="bar-row">
+            <div class="bar-labels"><span>Nếu chỉ giữ yên trong ví (HODL)</span><b id="barHoldText">1,050.0 Pi</b></div>
+            <div class="bar-track"><div class="bar-fill-hodl" id="barHoldFill" style="width: 85%;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-labels"><span style="color:#fff;">Góp bể thanh khoản (Gồm phí)</span><b class="text-gold" id="barLpText">1,208.8 Pi</b></div>
+            <div class="bar-track"><div class="bar-fill-lp" id="barLpFill" style="width: 95%;"></div></div>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card"><div class="metric-title">Tổn thất vô thường (IL)</div><div class="metric-num text-red" id="resIL">-1.2 Pi</div></div>
+          <div class="metric-card"><div class="metric-title">Phí giao dịch thu về (1 năm)</div><div class="metric-num text-gold" id="resFeeEarned">+160.0 Pi</div></div>
+          <div class="metric-card" style="grid-column: span 2; background: rgba(139, 92, 246, 0.08);"><div class="metric-title">Chênh lệch ròng (Góp bể so với Giữ yên)</div><div class="metric-num text-green" id="resNet" style="font-size:17px;">+158.8 Pi</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: ĐẤU TRƯỜNG ==================== -->
+  <div id="tab-trade" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <h2>⚡ Pi DEX Multi-Pool Trading</h2>
+        <span class="badge" id="ammRateBadge">1 Pi = 1.000 PiUSD</span>
+      </div>
+
+      <div class="sync-box">
+        <div class="sync-top">
+          <span style="font-size:12px; color:#a7f3d0;" id="syncStatus">📡 Đang dùng 3 bể mẫu cơ bản</span>
+          <button class="sync-btn" id="btnSyncTestnet" onclick="loadRealPiTestnetPools()">🔄 Tải bể thật Pi Testnet</button>
+        </div>
+        <select id="poolDropdown" class="pool-select" onchange="onSelectPoolChange()"></select>
+      </div>
+
+      <div class="metrics-grid" style="margin-bottom:14px;">
+        <div class="metric-card">
+          <div class="metric-title">🟣 Pi ảo khả dụng</div>
+          <div class="metric-num text-gold" id="balPi">10,000.00</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title" id="lblActiveTokenBal">💵 Số dư PiUSD</div>
+          <div class="metric-num" id="balActiveToken">0.00</div>
+        </div>
+      </div>
+
+      <div class="swap-box">
+        <div class="swap-box-top">
+          <span>Bạn trả (Phí bể 0.3%)</span>
+          <span style="cursor:pointer; color:var(--pi-gold);" onclick="setMaxSwap()">Dùng tối đa</span>
+        </div>
+        <div class="swap-input-row">
+          <input type="number" id="swapInput" value="500" oninput="previewSwap()" />
+          <div class="token-pill" id="fromTokenPill">🟣 Pi</div>
+        </div>
+      </div>
+
+      <div class="flip-btn-wrap">
+        <button class="flip-btn" onclick="flipSwapDirection()" title="Đảo chiều mua/bán">⇅</button>
+      </div>
+
+      <div class="swap-box">
+        <div class="swap-box-top">
+          <span>Bạn nhận được (Ước tính sau trượt giá)</span>
+          <span id="slippageText">Trượt giá: 0.25%</span>
+        </div>
+        <div class="swap-input-row">
+          <input type="text" id="swapOutputPreview" value="497.26" readonly style="color:var(--green);" />
+          <div class="token-pill" id="toTokenPill">💵 PiUSD</div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btnSwapAction" onclick="executeSwap()">Hoán đổi ngay (Pi ➔ PiUSD)</button>
+      <button class="btn-secondary" id="btnPumpAction" onclick="simulateMarketPump()">📈 Giả lập cá mập gom hàng</button>
+      <button class="btn-ad" onclick="watchAdForBonus()">🎬 Xem quảng cáo nhận +1,000 Pi ảo</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>📜 Lịch sử khớp lệnh của bạn</h2>
+        <span style="font-size:11px; color:var(--text-muted);" id="poolInfo">Bể: 200k Pi / 200k PiUSD</span>
+      </div>
+      <div class="history-list" id="tradeHistory">
+        <div style="text-align:center; color:var(--text-muted); padding:10px 0;">Chưa có giao dịch nào</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Đã chuyển sang sandbox: false để chạy trực tiếp trên Pi Browser qua HTTPS
+  const Pi = window.Pi;
+  if (Pi) { Pi.init({ version: "2.0", sandbox: false }); }
+
+  async function loginPi() {
+    if (!Pi) return alert("Vui lòng mở ứng dụng trong Pi Browser để kết nối ví thật!");
+    try {
+      const auth = await Pi.authenticate(['username', 'payments'], p => console.log(p));
+      document.getElementById('piUserBadge').innerHTML = `<span>●</span> @${auth.user.username}`;
+    } catch (err) {
+      alert("Chưa thể kết nối ví Pi: " + err.message);
+    }
+  }
+
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('nav.top-nav button').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tabId).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function switchSimSub(subId, btn) {
+    document.querySelectorAll('.sub-panel').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.sub-nav button').forEach(el => el.classList.remove('active'));
+    document.getElementById('sim-' + subId).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // QUIZ
+  let quizAnswered = { 1: false, 2: false, 3: false };
+  let correctCount = 0;
+
+  function checkQuiz(qNum, btn, isCorrect) {
+    if (quizAnswered[qNum]) return;
+    quizAnswered[qNum] = true;
+    const fb = document.getElementById('quizFeedback' + qNum);
+    if (isCorrect) {
+      btn.classList.add('correct');
+      fb.style.color = "var(--green)";
+      fb.innerText = "🎉 Chính xác! +500 Pi ảo đã được cộng vào Đấu trường.";
+      balances.PI += 500;
+      correctCount++;
+      document.getElementById('quizScoreBadge').innerText = `${correctCount}/3 Câu đúng`;
+      updateTradeUI();
+    } else {
+      btn.classList.add('wrong');
+      fb.style.color = "var(--red)";
+      fb.innerText = "❌ Chưa đúng! Hãy xem lại phần kiến thức phía trên nhé.";
+    }
+  }
+
+  // MÔ PHỎNG ARBITRAGE
+  function calcArb() {
+    const capital = parseFloat(document.getElementById('inpArbCapital').value);
+    const spreadPct = parseFloat(document.getElementById('inpArbSpread').value);
+    const poolSize = parseFloat(document.getElementById('inpArbPool').value);
+
+    document.getElementById('lblArbCapital').innerText = capital.toLocaleString() + " Pi";
+    document.getElementById('lblArbSpread').innerText = "+" + spreadPct.toFixed(1) + "%";
+    document.getElementById('lblArbPool').innerText = poolSize.toLocaleString() + " Pi";
+
+    const slippageRatio = capital / (poolSize + capital);
+    const slippageLoss = capital * slippageRatio;
+    const totalFees = capital * 0.005;
+    const grossGain = capital * (spreadPct / 100);
+    const netProfit = grossGain - slippageLoss - totalFees;
+    const totalReturn = capital + netProfit;
+    const netPct = (netProfit / capital) * 100;
+
+    document.getElementById('resArbSlippage').innerText = `-${slippageLoss.toFixed(1)} Pi (-${(slippageRatio*100).toFixed(1)}%)`;
+    document.getElementById('resArbFees').innerText = `-${totalFees.toFixed(1)} Pi (0.5%)`;
+    document.getElementById('resArbReturn').innerText = `${totalReturn.toFixed(1)} Pi`;
+
+    const profitEl = document.getElementById('resArbProfit');
+    profitEl.innerText = `${netProfit >= 0 ? '+' : ''}${netProfit.toFixed(1)} Pi (${netPct >= 0 ? '+' : ''}${netPct.toFixed(1)}%)`;
+    profitEl.className = "metric-num " + (netProfit >= 0 ? "text-green" : "text-red");
+
+    const adv = document.getElementById('arbAdvice');
+    if (netProfit > 5) {
+      adv.style.borderLeftColor = "var(--green)";
+      adv.innerHTML = `✅ <b>Kèo có lãi:</b> Thanh khoản bể đủ sâu giúp giữ trượt giá thấp. Thu ròng <b>+${netProfit.toFixed(1)} Pi</b>.`;
+    } else if (netProfit >= 0) {
+      adv.style.borderLeftColor = "var(--pi-gold)";
+      adv.innerHTML = `⚠️ <b>Biên lãi mỏng:</b> Phần lớn chênh lệch đã bị trượt giá và phí ăn mòn. Nên giảm vốn mỗi lệnh.`;
+    } else {
+      adv.style.borderLeftColor = "var(--red)";
+      adv.innerHTML = `🛑 <b>Cảnh báo lỗ vốn:</b> Lệnh mua quá lớn so với bể thanh khoản gây trượt giá nặng, làm bạn lỗ <b>${Math.abs(netProfit).toFixed(1)} Pi</b>!`;
+    }
+  }
+  calcArb();
+
+  // MÔ PHỎNG LP
+  function selectLpPreset(type, btn) {
+    document.querySelectorAll('#sim-lp .token-tab').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+    if (type === 'piusd') {
+      document.getElementById('lblPairPriceTitle').innerText = "Biến động giá PiUSD so với Pi:";
+      document.getElementById('inpPriceChange').value = 10; document.getElementById('inpFeeApr').value = 16;
+    } else if (type === 'eco') {
+      document.getElementById('lblPairPriceTitle').innerText = "Biến động giá ECO so với Pi:";
+      document.getElementById('inpPriceChange').value = 80; document.getElementById('inpFeeApr').value = 28;
+    } else if (type === 'meme') {
+      document.getElementById('lblPairPriceTitle').innerText = "Biến động giá MEME so với Pi:";
+      document.getElementById('inpPriceChange').value = 280; document.getElementById('inpFeeApr').value = 65;
+    }
+    calcLP();
+  }
+
+  function calcLP() {
+    const piInit = parseFloat(document.getElementById('inpPiAmount').value);
+    const pctChange = parseFloat(document.getElementById('inpPriceChange').value);
+    const feeApr = parseFloat(document.getElementById('inpFeeApr').value);
+
+    const ratio = 1 + (pctChange / 100);
+    document.getElementById('lblPiAmount').innerText = piInit.toLocaleString() + " Pi";
+    document.getElementById('lblPriceChange').innerText = (pctChange >= 0 ? "+" : "") + pctChange + "% (x" + ratio.toFixed(2) + ")";
+    document.getElementById('lblFeeApr').innerText = feeApr + "% / năm";
+
+    const totalInitVal = piInit * 2;
+    const holdVal = piInit * (1 + ratio);
+    const ilMultiplier = (2 * Math.sqrt(ratio)) / (1 + ratio);
+    const lpValBeforeFee = holdVal * ilMultiplier;
+    const ilLoss = lpValBeforeFee - holdVal;
+    const ilPct = (ilMultiplier - 1) * 100;
+
+    const feeEarned = totalInitVal * (feeApr / 100);
+    const lpFinalVal = lpValBeforeFee + feeEarned;
+    const netDiff = lpFinalVal - holdVal;
+
+    const maxVal = Math.max(holdVal, lpFinalVal, 1);
+    document.getElementById('barHoldText').innerText = holdVal.toFixed(1) + " Pi";
+    document.getElementById('barLpText').innerText = lpFinalVal.toFixed(1) + " Pi";
+    document.getElementById('barHoldFill').style.width = ((holdVal / maxVal) * 100) + "%";
+    document.getElementById('barLpFill').style.width = ((lpFinalVal / maxVal) * 100) + "%";
+
+    document.getElementById('resIL').innerText = `${ilLoss.toFixed(1)} Pi (${ilPct.toFixed(1)}%)`;
+    document.getElementById('resFeeEarned').innerText = `+${feeEarned.toFixed(1)} Pi`;
+
+    const netEl = document.getElementById('resNet');
+    netEl.innerText = (netDiff >= 0 ? `+${netDiff.toFixed(1)} Pi (Góp bể có lợi hơn)` : `${netDiff.toFixed(1)} Pi (Giữ yên có lợi hơn)`);
+    netEl.className = "metric-num " + (netDiff >= 0 ? "text-green" : "text-red");
+  }
+  calcLP();
+
+  // ĐẤU TRƯỜNG + ĐỒNG BỘ PI TESTNET
+  const pools = {
+    PIUSD: { symbol: "PiUSD", pi: 200000, token: 200000, icon: "💵", isReal: false },
+    ECO:   { symbol: "ECO",   pi: 50000,  token: 100000, icon: "🌿", isReal: false },
+    MEME:  { symbol: "MEME",  pi: 5000,   token: 500000, icon: "🚀", isReal: false }
+  };
+
+  let balances = { PI: 10000, PIUSD: 0, ECO: 0, MEME: 0 };
+  let activeKey = 'PIUSD';
+  let isPiToToken = true;
+  let history = [];
+
+  function renderPoolDropdown() {
+    const sel = document.getElementById('poolDropdown');
+    sel.innerHTML = Object.keys(pools).map(key => {
+      const p = pools[key];
+      const tag = p.isReal ? "[Pi Testnet Thật]" : "[Bể Mẫu]";
+      return `<option value="${key}" ${key === activeKey ? 'selected' : ''}>${p.icon} Pi / ${p.symbol} — Bể: ${Math.round(p.pi).toLocaleString()} Pi ${tag}</option>`;
+    }).join('');
+  }
+
+  function onSelectPoolChange() {
+    activeKey = document.getElementById('poolDropdown').value;
+    if (balances[activeKey] === undefined) balances[activeKey] = 0;
+    updateTradeUI();
+  }
+
+  async function loadRealPiTestnetPools() {
+    const btn = document.getElementById('btnSyncTestnet');
+    const status = document.getElementById('syncStatus');
+    btn.disabled = true;
+    btn.innerText = "⏳ Đang tải...";
+    status.innerText = "📡 Đang kết nối máy chủ Pi Testnet...";
+
+    try {
+      const res = await fetch('https://api.testnet.minepi.com/liquidity_pools?limit=100&order=desc');
+      if (!res.ok) throw new Error("Lỗi mạng");
+      const data = await res.json();
+      const records = data._embedded ? data._embedded.records : [];
+
+      let addedCount = 0;
+      records.forEach((pool, idx) => {
+        const piRes = pool.reserves.find(r => r.asset === 'native' && parseFloat(r.amount) > 10);
+        const tkRes = pool.reserves.find(r => r.asset !== 'native' && parseFloat(r.amount) > 0);
+        if (piRes && tkRes) {
+          const code = tkRes.asset.split(':')[0];
+          const uniqueKey = `REAL_${code}_${idx}`;
+          pools[uniqueKey] = {
+            symbol: code,
+            pi: parseFloat(piRes.amount),
+            token: parseFloat(tkRes.amount),
+            icon: "🌐",
+            isReal: true
+          };
+          if (balances[uniqueKey] === undefined) balances[uniqueKey] = 0;
+          addedCount++;
+        }
+      });
+
+      if (addedCount > 0) {
+        status.innerText = `✅ Đã tải thành công ${addedCount} bể thật từ Pi Testnet!`;
+        renderPoolDropdown();
+        updateTradeUI();
+      } else {
+        status.innerText = "⚠️ Không tìm thấy bể phù hợp lúc này. Dùng bể mẫu.";
+      }
+    } catch (err) {
+      status.innerText = "⚠️ Không thể kết nối trực tiếp lúc này. Vẫn dùng được 3 bể mẫu!";
+    } finally {
+      btn.disabled = false;
+      btn.innerText = "🔄 Tải lại Testnet";
+    }
+  }
+
+  function flipSwapDirection() {
+    isPiToToken = !isPiToToken;
+    document.getElementById('swapInput').value = isPiToToken ? 500 : Math.floor((balances[activeKey] || 100) * 100) / 100;
+    updateTradeUI();
+  }
+
+  function setMaxSwap() {
+    const maxVal = isPiToToken ? balances.PI : (balances[activeKey] || 0);
+    document.getElementById('swapInput').value = Math.floor(maxVal * 100) / 100;
+    previewSwap();
+  }
+
+  function previewSwap() {
+    const amountIn = parseFloat(document.getElementById('swapInput').value) || 0;
+    const pool = pools[activeKey];
+    if (amountIn <= 0) {
+      document.getElementById('swapOutputPreview').value = "0.00";
+      document.getElementById('slippageText').innerText = "Trượt giá: 0.00%";
+      return;
+    }
+
+    const k = pool.pi * pool.token;
+    const amountInWithFee = amountIn * 0.997;
+    let amountOut = 0, slippage = 0;
+
+    if (isPiToToken) {
+      const spotRate = pool.token / pool.pi;
+      amountOut = pool.token - (k / (pool.pi + amountInWithFee));
+      slippage = Math.max(0, (1 - (amountOut / amountIn) / spotRate) * 100);
+    } else {
+      const spotRate = pool.pi / pool.token;
+      amountOut = pool.pi - (k / (pool.token + amountInWithFee));
+      slippage = Math.max(0, (1 - (amountOut / amountIn) / spotRate) * 100);
+    }
+
+    document.getElementById('swapOutputPreview').value = amountOut.toFixed(2);
+    const slipEl = document.getElementById('slippageText');
+    slipEl.innerText = `Trượt giá: ${slippage.toFixed(2)}%`;
+    slipEl.style.color = slippage > 5 ? "var(--red)" : "var(--text-muted)";
+  }
+
+  function updateTradeUI() {
+    const pool = pools[activeKey];
+    const rate = pool.token / pool.pi;
+
+    document.getElementById('balPi').innerText = balances.PI.toLocaleString('en-US', {maximumFractionDigits: 2});
+    document.getElementById('lblActiveTokenBal').innerText = `${pool.icon} Số dư ${pool.symbol}`;
+    document.getElementById('balActiveToken').innerText = (balances[activeKey] || 0).toLocaleString('en-US', {maximumFractionDigits: 2});
+
+    document.getElementById('ammRateBadge').innerText = `1 Pi = ${rate >= 10 ? rate.toFixed(1) : rate.toFixed(3)} ${pool.symbol}`;
+    document.getElementById('poolInfo').innerText = `Bể: ${Math.round(pool.pi).toLocaleString()} Pi / ${Math.round(pool.token).toLocaleString()} ${pool.symbol}`;
+
+    if (isPiToToken) {
+      document.getElementById('fromTokenPill').innerText = `🟣 Pi`;
+      document.getElementById('toTokenPill').innerText = `${pool.icon} ${pool.symbol}`;
+      document.getElementById('btnSwapAction').innerText = `Hoán đổi ngay (Pi ➔ ${pool.symbol})`;
+    } else {
+      document.getElementById('fromTokenPill').innerText = `${pool.icon} ${pool.symbol}`;
+      document.getElementById('toTokenPill').innerText = `🟣 Pi`;
+      document.getElementById('btnSwapAction').innerText = `Chốt lời ngay (${pool.symbol} ➔ Pi)`;
+    }
+
+    const pumpAmt = Math.max(500, Math.round(pool.pi * 0.15));
+    document.getElementById('btnPumpAction').innerText = `📈 Giả lập cá mập bơm +${pumpAmt.toLocaleString()} Pi mua ${pool.symbol}`;
+    previewSwap();
+
+    const histEl = document.getElementById('tradeHistory');
+    if (history.length > 0) {
+      histEl.innerHTML = history.map(item => `
+        <div class="history-item"><span>${item.desc}</span><b class="text-green">${item.val}</b></div>
+      `).join('');
+    }
+  }
+
+  function executeSwap() {
+    const amountIn = parseFloat(document.getElementById('swapInput').value);
+    const pool = pools[activeKey];
+    const maxAvail = isPiToToken ? balances.PI : (balances[activeKey] || 0);
+
+    if (!amountIn || amountIn <= 0 || amountIn > maxAvail) {
+      return alert("Số dư không đủ hoặc số lượng nhập không hợp lệ!");
+    }
+
+    const k = pool.pi * pool.token;
+    const amountInWithFee = amountIn * 0.997;
+
+    if (isPiToToken) {
+      const newPoolPi = pool.pi + amountInWithFee;
+      const newPoolToken = k / newPoolPi;
+      const tokenOut = pool.token - newPoolToken;
+
+      pool.pi += amountIn;
+      pool.token = newPoolToken;
+      balances.PI -= amountIn;
+      balances[activeKey] = (balances[activeKey] || 0) + tokenOut;
+
+      history.unshift({ desc: `Mua ${pool.symbol} bằng ${amountIn} Pi`, val: `+${tokenOut.toFixed(2)} ${pool.symbol}` });
+    } else {
+      const newPoolToken = pool.token + amountInWithFee;
+      const newPoolPi = k / newPoolToken;
+      const piOut = pool.pi - newPoolPi;
+
+      pool.token += amountIn;
+      pool.pi = newPoolPi;
+      balances[activeKey] -= amountIn;
+      balances.PI += piOut;
+
+      history.unshift({ desc: `Bán ${amountIn} ${pool.symbol} thu về`, val: `+${piOut.toFixed(2)} Pi` });
+    }
+
+    renderPoolDropdown();
+    updateTradeUI();
+  }
+
+  function simulateMarketPump() {
+    const pool = pools[activeKey];
+    const pumpAmt = Math.max(500, Math.round(pool.pi * 0.15));
+    const k = pool.pi * pool.token;
+    pool.pi += pumpAmt;
+    pool.token = k / pool.pi;
+    history.unshift({ desc: `Cá mập bơm ${pumpAmt.toLocaleString()} Pi vào bể ${pool.symbol}`, val: `Giá ${pool.symbol} tăng` });
+    renderPoolDropdown();
+    updateTradeUI();
+  }
+
+  async function watchAdForBonus() {
+    if (Pi && Pi.Ads) {
+      try {
+        const res = await Pi.Ads.showAd("rewarded");
+        if (res.result === "AD_REWARDED") {
+          balances.PI += 1000;
+          history.unshift({ desc: `Thưởng xem quảng cáo`, val: `+1,000 Pi` });
+          updateTradeUI();
+        }
+      } catch (e) { alert("Mở trong Pi Browser để tải quảng cáo thật."); }
+    } else {
+      balances.PI += 1000;
+      history.unshift({ desc: `Thưởng dùng thử`, val: `+1,000 Pi` });
+      updateTradeUI();
+    }
+  }
+
+  renderPoolDropdown();
+  updateTradeUI();
+</script>
+</body>
+</html>
